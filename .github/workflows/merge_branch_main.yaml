@@ -5,8 +5,9 @@ on:
     branches:
       - 'main'
 
+
 jobs:
-  full-pipeline:
+  last-pipeline:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
