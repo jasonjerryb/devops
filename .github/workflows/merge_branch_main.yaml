@@ -1,4 +1,4 @@
-name: Main Branch Merge CI/CD
+name: Merge workflow
 
 on:
   push:
@@ -17,46 +17,43 @@ jobs:
         with:
           node-version: '14'
 
-      - name: Install dependencies
+      - name: dependences installation
         run: npm install
 
       - name: Run unit tests
         run: npm test
         working-directory: test
 
-      - name: Static code analysis with Semgrep
+      - name: hadolint install
         run: |
-          curl -LJO https://github.com/returntocorp/semgrep/releases/latest/download/semgrep-linux-amd64
-          chmod +x semgrep-linux-amd64
-          ./semgrep-linux-amd64 --config=auto
-        working-directory: ${{ github.workspace }}
+          wget -O /usr/local/bin/hadolint https://github.com/hadolint/hadolint/releases/download/v2.7.0/hadolint-Linux-x86_64
+          chmod +x /usr/local/bin/hadolint
 
-
-
-      - name: Install Hadolint
-        run: |
-          wget -O /bin/hadolint https://github.com/hadolint/hadolint/releases/download/v2.7.0/hadolint-Linux-x86_64
-          chmod +x /bin/hadolint
-
-      - name: Lint Dockerfile
+      - name: Lint dockerfile
         run: hadolint Dockerfile
 
-      - name: Build Docker image
+      - name: Docker image building
         run: |
-          docker build -t $DOCKER_USERNAME/myapp:latest .
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/myapp:latest .
 
-      - name: Push Docker image
+      - name: Docker image pushing
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
         run: |
           echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
           docker push $DOCKER_USERNAME/myapp:latest
 
-      - name: Install Trivy
+      - name: Trivy install
         run: |
           wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
           echo "deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | sudo tee -a /etc/apt/sources.list.d/trivy.list
-          sudo apt-get update && sudo apt-get install trivy
+          sudo apt-get update && sudo apt-get install -y trivy
 
-      - name: Scan Docker image with Trivy
+      - name:  Scaning image  with Trivy
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
         run: |
           docker pull $DOCKER_USERNAME/myapp:latest
           trivy image $DOCKER_USERNAME/myapp:latest

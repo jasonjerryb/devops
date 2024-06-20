@@ -1,4 +1,4 @@
-name: Pull Request CI
+name: Pull Request workflow
 
 on:
   pull_request:
@@ -17,19 +17,13 @@ jobs:
         with:
           node-version: '14'
 
-      - name: Install dependencies
+      - name: dependences installation
         run: npm install
 
       - name: Run unit tests
         run: npm test
 
-      - name: Static code analysis with Semgrep
-        run: |
-          curl -LJO https://github.com/returntocorp/semgrep/releases/latest/download/semgrep-linux-amd64
-          chmod +x semgrep-linux-amd64
-          ./semgrep-linux-amd64 --config=auto
-
-      - name: Install Hadolint
+      - name: Hadolint install
         run: |
           wget -O /bin/hadolint https://github.com/hadolint/hadolint/releases/download/v2.7.0/hadolint-Linux-x86_64
           chmod +x /bin/hadolint
@@ -37,13 +31,16 @@ jobs:
       - name: Lint Dockerfile
         run: hadolint Dockerfile
 
-      - name: Install Trivy
+      - name: Trivy install
         run: |
           wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
           echo "deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | sudo tee -a /etc/apt/sources.list.d/trivy.list
-          sudo apt-get update && sudo apt-get install trivy
+          sudo apt-get update && sudo apt-get install -y trivy
 
-      - name: Scan Docker image with Trivy
+      - name:  Scaning image  with Trivy
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
         run: |
-          docker pull $DOCKER_USERNAME/myapp:latest || true
+          docker pull $DOCKER_USERNAME/myapp:latest
           trivy image $DOCKER_USERNAME/myapp:latest

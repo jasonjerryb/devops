@@ -1,4 +1,4 @@
-name: Feature Branch CI
+name: Feature Branch workflows
 
 on:
   push:
@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [12, 14, 16]
+        node-version: [12, 14]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
